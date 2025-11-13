@@ -127,11 +127,11 @@ class FaceDetector:
         npu_out = [np.array(out) for out in npu_out]
         
         # ===== 디버깅: NPU 출력 형태 확인 =====
-        print(f"\n=== NPU 출력 디버깅 ===")
-        print(f"NPU 출력 개수: {len(npu_out)}")
-        for i, out in enumerate(npu_out):
-            print(f"출력 {i} shape: {out.shape}, dtype: {out.dtype}")
-        print("=" * 50)
+        #print(f"\n=== NPU 출력 디버깅 ===")
+        #print(f"NPU 출력 개수: {len(npu_out)}")
+        #for i, out in enumerate(npu_out):
+        #    print(f"출력 {i} shape: {out.shape}, dtype: {out.dtype}")
+        #print("=" * 50)
         # =====================================
         
         # 후처리 (첫 추론 시 초기화)

@@ -44,13 +44,13 @@ class AgeGenderPreProcess:
             swapRB=True
         )
         
-        print(f"\n[전처리 디버그 - GPU 방식]")
-        print(f"  입력 이미지 shape: {image.shape}")
-        print(f"  Resized shape: {resized.shape}")
-        print(f"  Blob shape: {blob.shape}")
-        print(f"  Blob 값 범위: min={blob.min():.4f}, max={blob.max():.4f}, mean={blob.mean():.4f}")
-        print(f"  Blob std: {blob.std():.4f}")
-        print(f"  Sample blob values [0,0,:5,:5]:\n{blob[0, 0, :5, :5]}")
+        #print(f"\n[전처리 디버그 - GPU 방식]")
+        #print(f"  입력 이미지 shape: {image.shape}")
+        #print(f"  Resized shape: {resized.shape}")
+        #print(f"  Blob shape: {blob.shape}")
+        #print(f"  Blob 값 범위: min={blob.min():.4f}, max={blob.max():.4f}, mean={blob.mean():.4f}")
+        #print(f"  Blob std: {blob.std():.4f}")
+        #print(f"  Sample blob values [0,0,:5,:5]:\n{blob[0, 0, :5, :5]}")
         
         return blob.astype(np.float32)
 
@@ -75,24 +75,24 @@ class AgeGenderPostProcess:
         Returns:
             tuple: (gender, age) - GPU 버전과 동일한 형식
         """
-        print(f"\n{'='*70}")
-        print(f"[나이/성별 NPU 원본 출력 디버깅]")
-        print(f"{'='*70}")
+        #print(f"\n{'='*70}")
+        #print(f"[나이/성별 NPU 원본 출력 디버깅]")
+        #print(f"{'='*70}")
         
         # 원본 출력 디버깅
-        print(f"출력 개수: {len(outputs)}")
+        #print(f"출력 개수: {len(outputs)}")
         for i, out in enumerate(outputs):
-            print(f"\n출력 {i}:")
-            print(f"  - shape: {out.shape}")
-            print(f"  - dtype: {out.dtype}")
-            print(f"  - 원본 값:\n{out}")
-            print(f"  - min: {out.min():.6f}, max: {out.max():.6f}, mean: {out.mean():.6f}")
+            #print(f"\n출력 {i}:")
+            #print(f"  - shape: {out.shape}")
+            #print(f"  - dtype: {out.dtype}")
+            #print(f"  - 원본 값:\n{out}")
+            #print(f"  - min: {out.min():.6f}, max: {out.max():.6f}, mean: {out.mean():.6f}")
             
             flat = out.flatten()
-            if len(flat) <= 20:
-                print(f"  - Flatten: {flat}")
+            #if len(flat) <= 20:
+                #print(f"  - Flatten: {flat}")
         
-        print(f"{'='*70}")
+        #print(f"{'='*70}")
         
         try:
             # NPU 출력을 GPU 형식으로 재구성
@@ -100,9 +100,9 @@ class AgeGenderPostProcess:
             age_output = outputs[0].squeeze()  # (1,1,1,1) → scalar
             gender_output = outputs[1].squeeze()  # (1,2,1,1) → (2,)
             
-            print(f"\n[Squeeze 후]")
-            print(f"age_output shape: {age_output.shape}, 값: {age_output}")
-            print(f"gender_output shape: {gender_output.shape}, 값: {gender_output}")
+            #print(f"\n[Squeeze 후]")
+            #print(f"age_output shape: {age_output.shape}, 값: {age_output}")
+            #print(f"gender_output shape: {gender_output.shape}, 값: {gender_output}")
             
             # GPU 형식으로 결합: [gender_logit1, gender_logit2, age_normalized]
             # 주의: NPU 출력 순서를 확인해야 함
@@ -119,28 +119,28 @@ class AgeGenderPostProcess:
             # GPU와 동일한 predictions 형식으로 재구성
             predictions = np.concatenate([gender_logits, [age_value]])
             
-            print(f"\n[GPU 형식으로 재구성된 predictions]")
-            print(f"  predictions shape: {predictions.shape}")
-            print(f"  predictions: {predictions}")
-            print(f"  predictions[:2] (gender logits): {predictions[:2]}")
-            print(f"  predictions[2] (age normalized): {predictions[2]:.6f}")
+            #print(f"\n[GPU 형식으로 재구성된 predictions]")
+            #print(f"  predictions shape: {predictions.shape}")
+            #print(f"  predictions: {predictions}")
+            #print(f"  predictions[:2] (gender logits): {predictions[:2]}")
+            #print(f"  predictions[2] (age normalized): {predictions[2]:.6f}")
             
             # GPU와 동일한 후처리 로직
-            print(f"\n[GPU 방식 후처리]")
+            #print(f"\n[GPU 방식 후처리]")
             
             # 성별 예측
             gender = np.argmax(predictions[:2])
-            print(f"  Gender argmax: {gender} ({'Male' if gender == 1 else 'Female'})")
-            print(f"  Gender logits: {predictions[:2]}")
+            #print(f"  Gender argmax: {gender} ({'Male' if gender == 1 else 'Female'})")
+            #print(f"  Gender logits: {predictions[:2]}")
             
             # 나이 예측
             age = int(np.round(predictions[2] * 100))
-            print(f"  Age normalized: {predictions[2]:.6f}")
-            print(f"  Age * 100: {predictions[2]*100:.4f}")
-            print(f"  Age rounded: {age}")
+            #print(f"  Age normalized: {predictions[2]:.6f}")
+            #print(f"  Age * 100: {predictions[2]*100:.4f}")
+            #print(f"  Age rounded: {age}")
             
-            print(f"\n{'='*70}")
-            print(f"[최종 결과 - GPU 방식]")
+            #print(f"\n{'='*70}")
+            #print(f"[최종 결과 - GPU 방식]")
             print(f"  Gender: {gender} ({'Male' if gender == 1 else 'Female'})")
             print(f"  Age: {age}세")
             print(f"{'='*70}\n")
