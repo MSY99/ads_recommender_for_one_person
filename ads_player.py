@@ -163,8 +163,8 @@ class VideoPlayer(QWidget):
 class YouTubePlayer(QWidget):
     """
     단순 유튜브 플레이어.
-    - 유튜브 URL 또는 비디오 ID를 받아서 embed URL로 재생
-    - 컨트롤 버튼 없음, 바로 자동재생
+    - 유튜브 URL 또는 비디오 ID를 받아서 일반 watch URL로 재생
+    - 컨트롤 버튼 없음
     """
     _global_webengine_initialized = False
     
@@ -188,16 +188,37 @@ class YouTubePlayer(QWidget):
         super().__init__(parent)
 
         self.webview = QWebEngineView(self)
+        
+        # 디버깅: 로드 상태 추적
+        self.webview.loadStarted.connect(self._on_load_started)
+        self.webview.loadProgress.connect(self._on_load_progress)
+        self.webview.loadFinished.connect(self._on_load_finished)
 
         layout = QVBoxLayout()
         layout.addWidget(self.webview)
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
+    def _on_load_started(self):
+        """로드 시작 이벤트"""
+        print("[YouTubePlayer] 🔄 로드 시작")
+
+    def _on_load_progress(self, progress):
+        """로드 진행률 (0~100)"""
+        print(f"[YouTubePlayer] 📊 로드 진행: {progress}%")
+
+    def _on_load_finished(self, ok):
+        """로드 완료 이벤트"""
+        if ok:
+            print("[YouTubePlayer] ✅ 로드 완료 성공")
+        else:
+            print("[YouTubePlayer] ❌ 로드 실패!")
+
     def load_and_play(self, url_or_id: str) -> bool:
         """
         유튜브 URL/ID 로드 및 재생.
         - 전체 URL or 11자리 video_id 모두 허용
+        - 🆕 일반 watch URL 사용 (embed 대신)
         """
         video_id = self._extract_video_id(url_or_id)
         if not video_id:
@@ -205,10 +226,12 @@ class YouTubePlayer(QWidget):
             self.webview.setHtml("<html><body style='background-color:#000;'></body></html>")
             return False
 
-        embed_url = self._build_embed_url(video_id)
-        print(f"[YouTubePlayer] ▶ 유튜브 재생 시작: {embed_url}")
+        # 🆕 일반 watch URL 사용
+        watch_url = f"https://www.youtube.com/watch?v={video_id}"
+        print(f"[YouTubePlayer] 🎬 추출된 Video ID: {video_id}")
+        print(f"[YouTubePlayer] ▶ 유튜브 재생 시작: {watch_url}")
 
-        self.webview.setUrl(QUrl(embed_url))
+        self.webview.setUrl(QUrl(watch_url))
         return True
 
     def _extract_video_id(self, url_or_id: str) -> str:
@@ -234,17 +257,9 @@ class YouTubePlayer(QWidget):
 
         return None
 
-    def _build_embed_url(self, video_id: str) -> str:
-        """자동재생/루프 옵션이 붙은 embed URL 생성"""
-        return (
-            f"https://www.youtube.com/embed/{video_id}"
-            f"?autoplay=1&loop=1&playlist={video_id}&controls=0&modestbranding=1&rel=0"
-        )
-
     def stop(self):
         """재생 중지 (검은 화면으로 전환)"""
         print("[YouTubePlayer] 유튜브 재생 중지")
-        # about:blank 도 좋고, 검은 배경 html도 가능
         self.webview.setHtml("<html><body style='background-color:#000;'></body></html>")
 
 
@@ -307,9 +322,9 @@ class UnifiedContentPlayer(QWidget):
             self.video_player.load_and_play(source)
 
         elif content_type == "youtube":
-            #self._set_active_widget(self.youtube_player)
-            #self.youtube_player.load_and_play(source)
-            print("[UnifiedContentPlayer] 아직 유튜브 실행 기능이 활성화되지 않았습니다.")
+            self._set_active_widget(self.youtube_player)
+            self.youtube_player.load_and_play(source)
+            #print("[UnifiedContentPlayer] 아직 유튜브 실행 기능이 활성화되지 않았습니다.")
 
         else:
             print(f"[UnifiedContentPlayer] ❌ 알 수 없는 content_type: {content_type}")

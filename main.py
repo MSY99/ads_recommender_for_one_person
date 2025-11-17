@@ -24,6 +24,9 @@ from ads_recommender import AdSelector
 from llm_infer import LLMInferenceManager
 from llm_worker import LLMInferenceWorkerThread
 
+# QtWebEngine 샌드박스 비활성화 (Docker 환경용)
+os.environ['QTWEBENGINE_DISABLE_SANDBOX'] = '1'
+os.environ['QTWEBENGINE_CHROMIUM_FLAGS'] = '--no-sandbox --disable-setuid-sandbox --ignore-certificate-errors'
 
 ADS_PATH = "./sample_ads/imgNvideos"
 YOUTUBE_CSV_PATH = "./sample_ads/sample_ad_video_urls/ads.csv"
@@ -1072,7 +1075,6 @@ class MainWindow(QMainWindow):
         
         print("[MainWindow] 종료 완료")
         event.accept()
-
 
 
 def main():

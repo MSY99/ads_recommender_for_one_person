@@ -1,0 +1,10 @@
+maccel==0.30.1
+mblt_model_zoo==0.4.0
+numpy==2.3.5
+opencv_python_headless==4.12.0.88
+PyQt5==5.15.11
+pyqt5_sip==12.17.1
+PyQt5_sip==12.9.1
+torch==2.7.1+cu128
+torchvision==0.22.1+cu128
+transformers==4.57.1
