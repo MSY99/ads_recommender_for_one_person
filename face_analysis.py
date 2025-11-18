@@ -8,6 +8,9 @@
 
 import os
 import sys
+import threading
+
+from model_manager import ModelManager
 
 # OpenCV와 PyQt5의 Qt 충돌 방지
 os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = ''
@@ -28,56 +31,15 @@ class AgeGenderDetectionManager:
     얼굴 탐지 및 나이/성별 예측을 관리하는 클래스
     """
     
-    def __init__(self, face_model_path, age_gender_model_path):
+    def __init__(self):
         """
-        Args:
-            face_model_path (str): 얼굴 탐지 모델 경로
-            age_gender_model_path (str): 나이/성별 예측 모델 경로
+        ModelManager로부터 공유 모델을 가져옴
         """
-        self.face_detector = None
-        self.age_gender_predictor = None
-        self.is_initialized = False
-        
-        try:
-            print("[INFO] Python sys.path:")
-            for i, path in enumerate(sys.path[:5], 1):
-                print(f"  {i}. {path}")
-            
-            # ===== 중요: 절대 임포트 사용 =====
-            print("[INFO] FaceDetector 임포트 시도...")
-            from face_detector import FaceDetector  # models/ 폴더 기준
-            
-            print("[INFO] AgeGenderPredictor 임포트 시도...")
-            from agegender_predict import AgeGenderPredictor  # models/ 폴더 기준
-            # ===================================
-            
-            print("[INFO] FaceDetector 초기화 중...")
-            self.face_detector = FaceDetector(
-                mxq_path=face_model_path,
-                conf_threshold=0.5,
-                iou_threshold=0.45,
-                img_size=640
-            )
-            print("[INFO] FaceDetector 초기화 완료")
-            
-            print("[INFO] AgeGenderPredictor 초기화 중...")
-            self.age_gender_predictor = AgeGenderPredictor(
-                mxq_path=age_gender_model_path,
-                img_size=96
-            )
-            print("[INFO] AgeGenderPredictor 초기화 완료")
-            
-            self.is_initialized = True
-            
-        except ImportError as e:
-            print(f"[ERROR] 모듈 임포트 실패: {e}")
-            print(f"[ERROR] 현재 작업 디렉토리: {os.getcwd()}")
-            self.is_initialized = False
-        except Exception as e:
-            print(f"[ERROR] 모델 초기화 실패: {e}")
-            import traceback
-            traceback.print_exc()
-            self.is_initialized = False
+        model_mgr = ModelManager()
+        self.face_detector, self.face_lock = model_mgr.get_face_detector()
+        self.age_gender_predictor, self.age_gender_lock = model_mgr.get_age_gender_predictor()
+        self.is_initialized = (self.face_detector is not None and 
+                            self.age_gender_predictor is not None)
     
     def process_frame(self, frame):
         """
@@ -101,8 +63,9 @@ class AgeGenderDetectionManager:
             }
         
         try:
-            # 얼굴 탐지
-            faces = self.face_detector.detect_faces(frame)
+            # 얼굴 탐지 (락 사용)
+            with self.face_lock:
+                faces = self.face_detector.detect_faces(frame)
             
             detections = []
             result_frame = frame.copy()
@@ -115,8 +78,9 @@ class AgeGenderDetectionManager:
                 
                 x1, y1, x2, y2 = bbox
                 
-                # 나이/성별 예측
-                age_gender_result = self.age_gender_predictor.predict(cropped_face)
+                # 나이/성별 예측 (락 사용)
+                with self.age_gender_lock:
+                    age_gender_result = self.age_gender_predictor.predict(cropped_face)
                 
                 if age_gender_result is not None:
                     gender_idx, age = age_gender_result

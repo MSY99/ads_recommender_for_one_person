@@ -1,0 +1,14 @@
+{
+  "face_detector": {
+    "cluster": 1,
+    "core": 0
+  },
+  "age_gender_predictor": {
+    "cluster": 1,
+    "core": 1
+  },
+  "llm_model": {
+    "cluster": 0,
+    "core": 0
+  }
+}

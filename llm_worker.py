@@ -7,7 +7,7 @@ LLM 추론 워커 스레드
 """
 
 from PyQt5.QtCore import QThread, pyqtSignal
-
+from model_manager import ModelManager
 
 class LLMInferenceWorkerThread(QThread):
     """LLM 추론만 수행하는 워커 스레드 (광고 표시 시 사용)"""
@@ -16,16 +16,16 @@ class LLMInferenceWorkerThread(QThread):
     result_ready = pyqtSignal(str)  # 추론 완료 시 결과 전달
     error_occurred = pyqtSignal(str)  # 에러 발생 시
     
-    def __init__(self, llm_manager, age_group, gender, actual_age):
+    def __init__(self, age_group, gender, actual_age):
         """
         Args:
-            llm_manager: LLMInferenceManager 인스턴스 (이미 초기화됨)
             age_group (str): 연령대 (20, 30, 40, 50)
             gender (str): 성별 (남성, 여성)
             actual_age (int): 실제 나이
         """
         super().__init__()
-        self.llm_manager = llm_manager
+        model_mgr = ModelManager()
+        self.llm_manager, self.llm_lock = model_mgr.get_llm_manager()
         self.age_group = age_group
         self.gender = gender
         self.actual_age = actual_age
@@ -42,12 +42,13 @@ class LLMInferenceWorkerThread(QThread):
             print(f"\n[LLM Inference Worker] 추론 시작")
             print(f"[LLM Inference Worker] 타겟: {self.age_group}대 {self.gender} ({self.actual_age}세)")
             
-            # LLM 추론 실행 (이 부분이 오래 걸림)
-            result = self.llm_manager.generate_ad_explanation(
-                self.age_group, 
-                self.gender, 
-                self.actual_age
-            )
+            # LLM 추론 실행 (락 사용)
+            with self.llm_lock:
+                result = self.llm_manager.generate_ad_explanation(
+                    self.age_group, 
+                    self.gender, 
+                    self.actual_age
+                )
             
             print(f"[LLM Inference Worker] ✓ 추론 완료 - 결과 길이: {len(result)} 글자")
             
