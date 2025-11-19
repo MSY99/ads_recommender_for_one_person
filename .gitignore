@@ -1,0 +1,6 @@
+models/cv/
+models/llm/
+*.mp4
+*.jpg
+*.png
+__pycache__/

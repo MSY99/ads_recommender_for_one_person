@@ -81,7 +81,7 @@ class LLMInferenceManager:
             traceback.print_exc()
             self.is_initialized = False
     
-    def generate_ad_explanation(self, age_group, gender, actual_age):
+    def generate_ad_explanation(self, age_group, gender, actual_age, ad_description):
         """
         광고 추천 이유 생성
         
@@ -99,12 +99,13 @@ class LLMInferenceManager:
             return error_msg
         
         # 프롬프트 생성
-        prompt = self._create_prompt(age_group, gender, actual_age)
+        prompt = self._create_prompt(age_group, gender, actual_age, ad_description)
         
         try:
             print(f"\n[LLM Manager] {'='*50}")
             print(f"[LLM Manager] 추론 시작")
             print(f"[LLM Manager] 타겟: {age_group}대 {gender} ({actual_age}세)")
+            print(f"[LLM Manager] 광고 설명: {ad_description}")
             print(f"[LLM Manager] {'='*50}")
             
             # 추론 실행
@@ -140,7 +141,7 @@ class LLMInferenceManager:
             traceback.print_exc()
             return error_msg
     
-    def _create_prompt(self, age_group, gender, actual_age):
+    def _create_prompt(self, age_group, gender, actual_age, ad_description):
         """
         광고 추천 프롬프트 생성
         
@@ -159,6 +160,9 @@ class LLMInferenceManager:
 - 연령대: {age_group}대
 - 성별: {gender}
 - 실제 나이: {actual_age}세
+
+광고 정보:
+- 설명: {ad_description}
 
 광고 추천 이유:"""
         
@@ -210,7 +214,7 @@ if __name__ == "__main__":
     
     if llm.is_initialized:
         # 광고 추천 테스트
-        result = llm.generate_ad_explanation("30", "남성", 32)
+        result = llm.generate_ad_explanation("30", "남성", 32, "30대의 건강을 위한 영양제 추천")
         print(f"\n[생성된 광고 추천 이유]\n{result}\n")
     
     # 리소스 정리

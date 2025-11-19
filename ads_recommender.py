@@ -11,13 +11,13 @@ class AdSelector:
     IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".gif"}
     VIDEO_EXTS = {".mp4", ".avi", ".mov", ".mkv"}
 
-    def __init__(self, media_dir: str, youtube_csv_path: str):
+    def __init__(self, ads_csv_path: str):
         """
         :param media_dir: 이미지/동영상 파일이 저장된 디렉토리 경로
-        :param youtube_csv_path: YouTube 광고 정보가 들어있는 CSV 파일 경로
+        :param ads_csv_path: 광고 정보가 들어있는 CSV 파일 경로
         """
-        self.media_dir = media_dir
-        self.youtube_csv_path = youtube_csv_path
+        #self.media_dir = media_dir
+        self.ads_csv_path = ads_csv_path
 
     # ==== UTILS ====
     def _normalize_key(self, age: int, gender: str) -> Tuple[str, str]:
@@ -26,7 +26,7 @@ class AdSelector:
         age_str = str(age).strip()
         return age_str, gender
 
-    def _load_media_ads(self, age: int, gender: str) -> List[Dict[str, str]]:
+    '''def _load_media_ads(self, age: int, gender: str) -> List[Dict[str, str]]:
         """로컬 이미지/동영상 파일에서 해당 타겟의 광고를 가져온다."""
         age_str, gender_norm = self._normalize_key(age, gender)
         key_prefix = f"{age_str}_{gender_norm}"
@@ -65,6 +65,39 @@ class AdSelector:
                 if row_gender == gender_norm and row_age == age_str:
                     ads.append({"type": "youtube", "value": row["ads_url"].strip()})
 
+        return ads'''
+    
+    def _load_all_ads(self, age: int, gender: str) -> List[Dict[str, str]]:
+        """CSV에서 해당 타겟의 YouTube 광고를 가져온다."""
+        age_str, gender_norm = self._normalize_key(age, gender)
+        ads: List[Dict[str, str]] = []
+
+        if not os.path.isfile(self.ads_csv_path):
+            return ads
+
+        with open(self.ads_csv_path, newline="", encoding="utf-8-sig") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                row_gender = row["target_gender"].strip().lower()
+                row_age = str(row["target_age"]).strip()
+                if row_gender == gender_norm and row_age == age_str:
+                    ads_type = row["ads_type"].strip().lower()
+                    ads_url = row["ads_url"].strip()
+                    ads_detail = row.get("ads_detail", "").strip()
+                    
+                    # ads_type 매핑: image -> img
+                    content_type = "img" if ads_type == "image" else ads_type
+                    
+                    if content_type in ["img", "video"]:
+                        if not os.path.isabs(ads_url):
+                            ads_url = os.path.abspath(ads_url)
+                    
+                    ads.append({
+                        "type": content_type,
+                        "value": ads_url,
+                        "description": ads_detail
+                    })
+
         return ads
 
     # ==== External Methods ====
@@ -80,16 +113,17 @@ class AdSelector:
         ]
         """
         ads = []
-        ads.extend(self._load_media_ads(age, gender))
-        ads.extend(self._load_youtube_ads(age, gender))
+        #ads.extend(self._load_media_ads(age, gender))
+        #ads.extend(self._load_youtube_ads(age, gender))
+        ads.extend(self._load_all_ads(age, gender))
         return ads
 
-    def select_ad(self, age: str, gender: str) -> Optional[Tuple[str, str]]:
+    def select_ad(self, age: str, gender: str) -> Optional[Tuple[str, str, str]]:
         """
         나이/성별에 맞는 광고 중 하나를 랜덤 선택해서 반환.
 
         반환값:
-            (content_type, path_or_url)
+            (content_type, path_or_url, description)
             content_type ∈ {"img", "video", "youtube"}
 
         광고가 하나도 없으면 None 반환.
@@ -99,4 +133,4 @@ class AdSelector:
             return None
 
         chosen = random.choice(candidates)
-        return chosen["type"], chosen["value"]
+        return chosen["type"], chosen["value"], chosen["description"]

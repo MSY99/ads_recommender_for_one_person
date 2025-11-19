@@ -16,12 +16,13 @@ class LLMInferenceWorkerThread(QThread):
     result_ready = pyqtSignal(str)  # 추론 완료 시 결과 전달
     error_occurred = pyqtSignal(str)  # 에러 발생 시
     
-    def __init__(self, age_group, gender, actual_age):
+    def __init__(self, age_group, gender, actual_age, ad_description):
         """
         Args:
             age_group (str): 연령대 (20, 30, 40, 50)
             gender (str): 성별 (남성, 여성)
             actual_age (int): 실제 나이
+            ad_description: 광고 정보
         """
         super().__init__()
         model_mgr = ModelManager()
@@ -29,6 +30,7 @@ class LLMInferenceWorkerThread(QThread):
         self.age_group = age_group
         self.gender = gender
         self.actual_age = actual_age
+        self.ad_description = ad_description
     
     def run(self):
         """스레드 실행 (백그라운드에서 LLM 추론)"""
@@ -41,13 +43,15 @@ class LLMInferenceWorkerThread(QThread):
             
             print(f"\n[LLM Inference Worker] 추론 시작")
             print(f"[LLM Inference Worker] 타겟: {self.age_group}대 {self.gender} ({self.actual_age}세)")
+            print(f"[LLM Interence Worker] 추천된 광고 설명: {self.ad_description}")
             
             # LLM 추론 실행 (락 사용)
             with self.llm_lock:
                 result = self.llm_manager.generate_ad_explanation(
                     self.age_group, 
                     self.gender, 
-                    self.actual_age
+                    self.actual_age,
+                    self.ad_description
                 )
             
             print(f"[LLM Inference Worker] ✓ 추론 완료 - 결과 길이: {len(result)} 글자")

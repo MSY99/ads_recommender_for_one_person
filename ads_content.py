@@ -21,8 +21,7 @@ class AdsContent(QObject):
     
     def __init__(
         self, 
-        ad_base_path: str,
-        youtube_csv_path: str,
+        ads_csv_path: str,
         content_player: UnifiedContentPlayer,
         ads_selector: AdSelector = None,
         parent=None
@@ -36,12 +35,11 @@ class AdsContent(QObject):
         """
         super().__init__(parent)
         
-        self.ad_base_path = ad_base_path
-        self.youtube_csv_path = youtube_csv_path
+        self.ads_csv_path = ads_csv_path
 
         # 광고 선택/재생 관련
         self.content_player = content_player          # UnifiedContentPlayer
-        self.ads_selector = ads_selector or AdSelector(ad_base_path, youtube_csv_path)
+        self.ads_selector = ads_selector or AdSelector(ads_csv_path)
         
         # LLM 관련
         self.llm_manager = None
@@ -119,7 +117,7 @@ class AdsContent(QObject):
             self.error_occurred.emit(error_msg)
             return False
 
-        content_type, source = selection
+        content_type, source, description = selection
 
         if not content_type or not source:
             error_msg = "AdsSelector에서 유효한 광고 정보를 받지 못했습니다."
@@ -128,6 +126,7 @@ class AdsContent(QObject):
             return False
 
         print(f"[AdsContent] ✓ 선택된 광고: type={content_type}, source={source}")
+        print(f"[AdsContent] ✓ 광고 설명: {description}")
 
         # === UnifiedPlayer로 콘텐츠 타입에 따라 재생 ===
         self.content_player.show_content(content_type, source)
@@ -147,7 +146,7 @@ class AdsContent(QObject):
             return True
         
         # LLM 비동기 추론 시작
-        self._start_llm_inference_async(age_group, gender, age)
+        self._start_llm_inference_async(age_group, gender, age, description)
         
         return True
 
@@ -178,7 +177,7 @@ class AdsContent(QObject):
         return error_msg
 
     # === LLM 비동기 실행 ===
-    def _start_llm_inference_async(self, age_group, gender, age):
+    def _start_llm_inference_async(self, age_group, gender, age, ad_description=""):
         """
         LLM 추론 비동기 시작
         
@@ -186,6 +185,7 @@ class AdsContent(QObject):
             age_group: 연령대
             gender: 성별
             age: 실제 나이
+            ad_description: 광고 정보
         """
         # 로딩 메시지 먼저 표시
         loading_msg = "🔄 AI가 광고를 분석하는 중입니다...\n잠시만 기다려주세요."
@@ -197,7 +197,8 @@ class AdsContent(QObject):
         self.llm_worker = LLMInferenceWorkerThread(
             age_group,
             gender,
-            age
+            age,
+            ad_description
         )
         
         # 시그널 연결

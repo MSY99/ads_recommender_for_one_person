@@ -28,6 +28,7 @@ os.environ['QTWEBENGINE_CHROMIUM_FLAGS'] = '--no-sandbox --disable-setuid-sandbo
 
 ADS_PATH = "./sample_ads/imgNvideos"
 YOUTUBE_CSV_PATH = "./sample_ads/sample_ad_video_urls/ads.csv"
+ADS_CSV_PATH = "/workspace/interactive_ads_gui/src-old/sample_ads/ads.csv"
 FACE_MODEL_PATH = "./models/cv/yolov8n-face-lindevs.mxq"
 AGE_GENDER_MODEL_PATH = "./models/cv/genderage.mxq"
 LLM_MODEL_PATH = "./models/llm/mblt-exaone"
@@ -51,8 +52,7 @@ class MainWindow(QMainWindow):
         
         # 광고 콘텐츠 모듈 생성 (ad_player 준비된 이후)
         self.ads_content = AdsContent(
-            ad_base_path=ADS_PATH,
-            youtube_csv_path=YOUTUBE_CSV_PATH,
+            ads_csv_path=ADS_CSV_PATH,
             content_player=self.ad_player,  # 광고 표시 위젯
         )
         
